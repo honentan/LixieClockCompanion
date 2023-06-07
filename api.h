@@ -15,6 +15,7 @@
 #define LUNAR_URL_PREFIX1 "https://www.mxnzp.com/api/holiday/single/"
 #define LUNAR_URL_PREFIX2 "?ignoreHoliday=false"
 #define LUNAR_MESSAGE_MAX_LENGTH 768
+#define MIN_DATA_LENGTH 60
 
 typedef struct XinZhiWeatherData
 {

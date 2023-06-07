@@ -124,13 +124,16 @@ void updateAll()
     wifiConnect();
 
     NTPSync(p->tm_hour);
+    
+    if (p->tm_hour >= 23 || p->tm_hour < 6) // 23点-6点关闭屏幕（降低亮度至1仍比较亮）
+      oled.setContrast(0);       // 降低屏幕亮度，0为关闭
+    else  // 6点-23点恢复亮度
+      oled.setContrast(200);     // 恢复屏幕亮度，最高255
     Serial.printf("update1 free heap: %d\n", ESP.getFreeHeap());
-
-    //return; // 每次更新一种
   }
 
   // 实时天气：20分钟
-  if ((p->tm_min % 20 + 1 == 1) && (p->tm_min != weather_now_sync_min) || weather_now_sync_min < 0)
+  if ((p->tm_min % 20 == 1) && (p->tm_min != weather_now_sync_min) || weather_now_sync_min < 0)
   {
     Serial.printf("%d-%d %d:%d:%d Start WeatherNow...\n", p->tm_mon, p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
     wifiConnect();
@@ -143,8 +146,6 @@ void updateAll()
       wl_frame.updateWeatherNow(w_data_now);
     }
     Serial.printf("update2 free heap: %d\n", ESP.getFreeHeap());
-
-    //return; // 每次更新一种
   }
 
   // 预报天气：4小时
@@ -161,8 +162,6 @@ void updateAll()
       wl_frame.updateWeather3d(w_data_3d);
     }
     Serial.printf("update3 free heap: %d\n", ESP.getFreeHeap());
-
-    //return; // 每次更新一种
   }
 
   // 农历日历
@@ -181,8 +180,6 @@ void updateAll()
       lunar_sync_mday = p->tm_mday;
     }
     Serial.printf("update4 free heap: %d\n", ESP.getFreeHeap());
-
-    //return; // 每次更新一种
   }
 }
 
@@ -191,7 +188,7 @@ void wifiConnect()
 {
   if (WiFi.status() == WL_CONNECTED)
   {
-    Serial.print("Already connected!\n");
+    //Serial.print("Already connected!\n");
 
     return;
   }
@@ -203,8 +200,8 @@ void wifiConnect()
     Serial.print('.');
     delay(80);
   }
-  Serial.println("");
-  delay(500);
+  Serial.printf("done!\n");
+  //delay(500);
 }
 
 // NTP时间同步

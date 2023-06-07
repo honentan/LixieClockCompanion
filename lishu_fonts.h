@@ -10,12 +10,23 @@
 
 #define UTF8_HZ_LENGTH 3
 
+#define FZYT_FONT_NUMBER 20
+#define FZYT_FONT_LENGTH 120 // 4*30
+#define FZYT_FONT_WEIGHT 30
+#define FZYT_FONT_HEIGHT 30
+
 typedef struct
 {
-  //int weight;
-  //int height;
+  char fzyt_str[UTF8_HZ_LENGTH + 1]; // utf-8汉字
+  unsigned char bits[FZYT_FONT_LENGTH];
+} FzytFont3030; // 方正姚体30x30
+
+extern const char fzyt_font_3030[FZYT_FONT_NUMBER][FZYT_FONT_LENGTH];
+extern const char fzyt_font_ids[FZYT_FONT_NUMBER][UTF8_HZ_LENGTH + 1]; // utf-8汉字
+
+typedef struct
+{
   char solar_term[UTF8_HZ_LENGTH + 1]; // utf-8汉字
-  int8_t index;
   unsigned char bits[LISHU_FONT_LENGTH];
 } SolarFont3030;
 
