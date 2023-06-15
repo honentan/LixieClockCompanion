@@ -10,13 +10,19 @@
 //   a LOGIC-LEVEL CONVERTER on the data line is STRONGLY RECOMMENDED.
 // (Skipping these may work OK on your workbench but can fail in the field)
 
+#define TNHMETER // 温湿度检测SHT40
+
 #include <Adafruit_NeoPixel.h>
 #ifdef __AVR__
- #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
+  #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
 
 #include "led_rainbow.h"
 #include "WeatherLunar.h"
+
+#ifdef TNHMETER // 温湿度模块
+  #include "Adafruit_SHT4x.h"
+#endif
 
 // Which pin on the Arduino is connected to the NeoPixels?
 // On a Trinket or Gemma we suggest changing this to 1:
@@ -47,6 +53,11 @@ LED_RAINBOW LEDRainbow = LED_RAINBOW(LED_GROUP_COUNT, &strip, group_colors);
 int8_t time_digits[LED_GROUP_COUNT * 2];
 int sensorValue = 0;
 
+#ifdef TNHMETER // 温湿度检测模块
+  Adafruit_SHT4x sht4 = Adafruit_SHT4x(); // 温湿度模块初始化
+  sensors_event_t humidity, temp; // 湿度，温度全局变量
+#endif
+
 extern time_t now;
 
 // setup() function -- runs once at startup --------------------------------
@@ -62,12 +73,16 @@ void setup() {
   /* 1. 初始化串口通讯波特率为115200 */
   Serial.begin(115200);
   Serial.printf("setup0 free heap: %d\n", ESP.getFreeHeap());
-  
+
+#ifdef TNHMETER // 温湿度模块
+  sht4_setup();
+#endif
+
   weather_lunar_setup();
 
-  strip.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
-  strip.show();            // Turn OFF all pixels ASAP
-  strip.setBrightness(255); // Set BRIGHTNESS to about 1/5 (max = 255)
+  strip.begin();            // INITIALIZE NeoPixel strip object (REQUIRED)
+  strip.show();             // Turn OFF all pixels ASAP
+  strip.setBrightness(50); // Set BRIGHTNESS to about 1/5 (max = 255)
 }
 
 
@@ -129,3 +144,59 @@ void time2LEDPos(struct tm *p) {
   time_digits[10] = led_sn[p->tm_sec % 10] + 100;
   time_digits[11] = led_sn[p->tm_sec % 10] + 110;
 }
+
+#ifdef TNHMETER // 温湿度模块
+  // 温湿度模块初始化
+  void sht4_setup(void)
+  {
+    Serial.println("Adafruit SHT4x test ");
+  
+    sht4.begin();
+  
+    Serial.println("Found SHT4x sensor");
+    Serial.print("Serial number 0x");
+    Serial.println(sht4.readSerial(), HEX);
+  
+    // You can have 3 different precisions, higher precision takes longer
+    sht4.setPrecision(SHT4X_HIGH_PRECISION);
+    switch (sht4.getPrecision()) {
+      case SHT4X_HIGH_PRECISION: 
+        Serial.println("High precision");
+        break;
+      case SHT4X_MED_PRECISION: 
+        Serial.println("Med precision");
+        break;
+      case SHT4X_LOW_PRECISION: 
+        Serial.println("Low precision");
+        break;
+    }
+  
+    // You can have 6 different heater settings
+    // higher heat and longer times uses more power
+    // and reads will take longer too!
+    sht4.setHeater(SHT4X_NO_HEATER);
+    switch (sht4.getHeater()) {
+      case SHT4X_NO_HEATER: 
+        Serial.println("No heater");
+        break;
+      case SHT4X_HIGH_HEATER_1S: 
+        Serial.println("High heat for 1 second");
+        break;
+      case SHT4X_HIGH_HEATER_100MS: 
+        Serial.println("High heat for 0.1 second");
+        break;
+      case SHT4X_MED_HEATER_1S: 
+        Serial.println("Medium heat for 1 second");
+        break;
+      case SHT4X_MED_HEATER_100MS: 
+        Serial.println("Medium heat for 0.1 second");
+        break;
+      case SHT4X_LOW_HEATER_1S: 
+        Serial.println("Low heat for 1 second");
+        break;
+      case SHT4X_LOW_HEATER_100MS: 
+        Serial.println("Low heat for 0.1 second");
+        break;
+    }
+  }
+#endif

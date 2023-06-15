@@ -1,15 +1,21 @@
 #include <Arduino.h>
 #include <ESP8266HTTPClient.h>
-//#include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
-//#include <coredecls.h>
-//#include <sys/time.h>
 #include <time.h>
+
+#define TNHMETER // 温湿度检测SHT40
 
 /* 使用0.96寸的OLED屏幕需要使用包含这个头文件 */
 #include "SSD1306Wire.h"
 /* OLED屏幕ui界面需要使用的头文件 */
 #include "OLEDDisplayUi.h"
+
+#ifdef TNHMETER // 温湿度模块
+  #include "Adafruit_SHT4x.h"
+
+  extern Adafruit_SHT4x sht4;
+  extern sensors_event_t humidity, temp; // 湿度，温度全局变量
+#endif
 
 #include "WeatherLunar.h"
 #include "wl_frame.h"
@@ -59,10 +65,25 @@ void frameWeather3d(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, 
   wl_frame.drawWeather3d(display, x, y);
 }
 
-/* 将要显示的每一帧图像函数定义在一个数组中 */
-FrameCallback frames[] = { frameLunarCalendar, /*frameClock,*/ frameWeatherNow, frameWeather3d, };
-/* 图像数量 */
-int frameCount = 3;
+#ifdef TNHMETER // 温湿度模块
+  // 画屏幕函数数组 - 4.温湿度计
+  void frameTnHMeter(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, int16_t y)
+  {
+    wl_frame.TnHMeter(int(temp.temperature), int(humidity.relative_humidity), display, x, y);
+  }
+#endif
+
+#ifdef TNHMETER // 温湿度模块
+  /* 将要显示的每一帧图像函数定义在一个数组中 */
+  FrameCallback frames[] = { frameLunarCalendar, /*frameClock,*/ frameWeatherNow, frameWeather3d, frameTnHMeter, };
+  /* 图像数量 */
+  int frameCount = 4;
+#else
+  /* 将要显示的每一帧图像函数定义在一个数组中 */
+  FrameCallback frames[] = { frameLunarCalendar, /*frameClock,*/ frameWeatherNow, frameWeather3d, };
+  /* 图像数量 */
+  int frameCount = 3;
+#endif
 
 // 获取当前时间
 struct tm *nowTimeStruct()
@@ -117,6 +138,10 @@ void updateAll()
 {
   struct tm *p = nowTimeStruct();
 
+#ifdef TNHMETER // 温湿度模块
+  sht4.getEvent(&humidity, &temp);// populate temp and humidity objects with fresh data
+#endif
+
   // NTP同步：1小时
   if ((p->tm_hour != NTP_sync_hour) && (p->tm_sec > 20))
   {
@@ -165,7 +190,7 @@ void updateAll()
   }
 
   // 农历日历
-  if (p->tm_mday != lunar_sync_mday || lunar_sync_mday < 0)
+  if ((p->tm_mday != lunar_sync_mday && p->tm_sec >= 8) || lunar_sync_mday < 0)
   {
     Serial.printf("%d-%d %d:%d:%d Start LunarCalendar...\n", p->tm_mon, p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
     wifiConnect();
