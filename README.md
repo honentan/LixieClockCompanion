@@ -8,3 +8,7 @@ LixieClock with 0.96oled - show weather forecast and China lunar calendar.
 
 具体效果看这里的视频：
 https://blog.csdn.net/honentan/article/details/131001544?spm=1001.2014.3001.5502
+
+更新：
+23点至次日6点关闭OLED。
+加入温湿度检测模块SHT40，可通过编译选项配置。
