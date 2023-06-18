@@ -103,16 +103,14 @@ void loop() {
 
 void showLEDTime(struct tm *p) {
   time2LEDPos(p);
+  
+  bool led_rhythm_mode = p->tm_hour % 2 == 0 ? true : false; // 偶数点为律动模式
 
   for (int8_t i = 0; i < LED_COUNT; i++)
 	  strip.setPixelColor(i, 0);
 
-  //for (int8_t i = 0; i < LED_GROUP_COUNT * 2; i++) {
-  //  Serial.printf("time_digits[%d]=%d ", i, time_digits[i]);
-  //}
-  //Serial.printf("sensorValue: %d,%d\n", sensorValue, int(sensorValue / MAX_VOLUME_VAL * 255.0));
   for (int8_t i = 0; i < LED_GROUP_COUNT; i++) {
-    if (p->tm_hour % 2 == 0) {
+    if (led_rhythm_mode) { // 律动模式只有一种颜色
       strip.setPixelColor(time_digits[i * 2], group_colors[0]);
       strip.setPixelColor(time_digits[i * 2 + 1], group_colors[0]);
     } else {
@@ -120,8 +118,8 @@ void showLEDTime(struct tm *p) {
       strip.setPixelColor(time_digits[i * 2 + 1], group_colors[i]);
     }
   }
-  if (p->tm_hour % 2 == 0)
-	  strip.setBrightness(int(sensorValue / MAX_VOLUME_VAL * 255));
+  if (led_rhythm_mode) // 律动模式亮度根据音量大小变化
+	strip.setBrightness(int(sensorValue / MAX_VOLUME_VAL * 255));
   else
     strip.setBrightness(NORMAL_BRIGHTNESS);
   strip.show();
